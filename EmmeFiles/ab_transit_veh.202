@@ -1,0 +1,28 @@
+c Transit Vehicles for use in AB Model
+t vehicles init
+c Community Transit
+a 1 'CT Local' b 2000 39 51 0 0 0 0 2
+a 2 'CT Art' b 2000 65 85 0 0 0 0 2
+a 3 'CT Db Tall' p 2000 77 95 0 0 0 0 2
+a 4 'CT Swift' p 2000 65 85 0 0 0 0 2
+c Everett Transit
+a 5 'ET Local' b 2000 50 65 0 0 0 0 2
+c King County Metro
+a 6 'KCM Std' b 2000 44 57 0 0 0 0 2
+a 7 'KCM Art' b 2000 65 85 0 0 0 0 2
+a 8 'KCM Dart' b 2000 18 23 0 0 0 0 1.5
+a 9 'KCM R.Ride' p 2000 65 85 0 0 0 0 2
+a 10 'KCM PasFry' f 50 300 300 0 0 0 0 0
+c Kitsap Transit
+a 11 'KT Local' b 2000 20 30 0 0 0 0 2
+a 12 'KT WD' b 2000 20 30 0 0 0 0 2
+c Pierce Transit
+a 13 'PT Local' b 2000 50 65 0 0 0 0 2
+a 14 'PT Exp' p 2000 50 65 0 0 0 0 2
+c Sound Transit
+a 15 'ST Exp' p 2000 65 85 0 0 0 0 2
+a 16 'ST Link' r 50 300 500 0 0 0 0 0
+a 17 'ST Sounder' c 50 980 1750 0 0 0 0 0
+c Washington State Ferries
+a 18 'WSF Auto' f 50 1000 1000 0 0 0 0 0
+a 19 'WSF PasFry' f 50 300 300 0 0 0 0 0
