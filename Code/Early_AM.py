@@ -1,30 +1,32 @@
+import array as _array
 import inro.emme.desktop.app as app
 import inro.modeller as _m
 import inro.emme.matrix
 import inro.emme.database.matrix
 import json
-import array as _array
 import numpy as _np
+import time
 import os
 
 # Start an instance of Emme - for now this is using the GUI
+start_of_run = time.time()
 my_desktop = app.start_dedicated(False, "cth", 'C:\Users\craig\Documents\ABM\ABM.emp')
 my_modeller = _m.Modeller(my_desktop)
 
-# Define a few Emme Tools we will be using
-copy_matrix = my_modeller.tool("inro.emme.data.matrix.copy_matrix")
-delete_matrix = my_modeller.tool("inro.emme.data.matrix.delete_matrix")
-balance_matrix = _m.Modeller().tool("inro.emme.matrix_calculation.matrix_balancing")
-calculate_matrix = _m.Modeller().tool("inro.emme.matrix_calculation.matrix_calculator")
-assign_traffic = _m.Modeller().tool("inro.emme.traffic_assignment.path_based_traffic_assignment")
-skim_traffic = _m.Modeller().tool("inro.emme.traffic_assignment.path_based_statistics")
-convert_to_csv = _m.Modeller().tool("inro.emme.data.matrix.export_matrix_to_csv")
-init_matrix = _m.Modeller().tool("inro.emme.data.matrix.init_matrix")
+# Emme and Modeller Tools we used for the assignment and skimming processes
+manage_vdfs = _m.Modeller().tool("inro.emme.data.function.function_transaction")
 create_matrix = _m.Modeller().tool("inro.emme.data.matrix.create_matrix")
+assign_extras = _m.Modeller().tool("inro.emme.traffic_assignment.set_extra_function_parameters")
+assign_traffic = _m.Modeller().tool("inro.emme.traffic_assignment.path_based_traffic_assignment")
+skim_traffic = _m.Modeller().tool("inro.emme.traffic_assignment.path_based_traffic_analysis")
+network_calc = _m.Modeller().tool("inro.emme.network_calculation.network_calculator")
 
-# Define what our scenario and bank we are working in
+# Define what our scenario and bank we are working in and import basic data like Volume Delay Functions
 current_scenario = _m.Modeller().desktop.data_explorer().primary_scenario.core_scenario.ref
 emmebank = current_scenario.emmebank
+default_path = os.path.dirname(_m.Modeller().emmebank.path).replace("\\","/")
+function_file = os.path.join(default_path,"Inputs/VDFs/early_am_vdfs.in").replace("\\","/")
+manage_vdfs(transaction_file = function_file,throw_on_error = True)
 
 # Value of Time Categories by Vehicle Type for Assignments
 percept_factors = {"classes": [{'name': "SOV Toll Income Level 1",'vot': 0.3000},
@@ -145,9 +147,7 @@ max_iter = 5
 b_rel_gap = 0.0001
 
 #Define Standard Path Based Assignment from Modeller
-# this is the specification for an 11 class path based auto assignemnt from Modeller
-
-assign_spec = """{
+assignment_spec = """{
     "type": "PATH_BASED_TRAFFIC_ASSIGNMENT",
     "classes": [
         {
@@ -199,7 +199,7 @@ assign_spec = """{
             }
         },
         {
-            "mode": "h",
+            "mode": "d",
             "demand": "mfh2tl1v",
             "generalized_cost": {
                 "link_costs": "@toll2",
@@ -207,7 +207,7 @@ assign_spec = """{
             }
         },
         {
-            "mode": "h",
+            "mode": "d",
             "demand": "mfh2tl2v",
             "generalized_cost": {
                 "link_costs": "@toll2",
@@ -215,7 +215,7 @@ assign_spec = """{
             }
         },
         {
-            "mode": "h",
+            "mode": "d",
             "demand": "mfh2tl3v",
             "generalized_cost": {
                 "link_costs": "@toll2",
@@ -223,7 +223,7 @@ assign_spec = """{
             }
         },
         {
-            "mode": "d",
+            "mode": "h",
             "demand": "mfh2nt1v",
             "generalized_cost": {
                 "link_costs": "@toll2",
@@ -231,7 +231,7 @@ assign_spec = """{
             }
         },
         {
-            "mode": "d",
+            "mode": "h",
             "demand": "mfh2nt2v",
             "generalized_cost": {
                 "link_costs": "@toll2",
@@ -239,7 +239,7 @@ assign_spec = """{
             }
         },
         {
-            "mode": "d",
+            "mode": "h",
             "demand": "mfh2nt3v",
             "generalized_cost": {
                 "link_costs": "@toll2",
@@ -247,7 +247,7 @@ assign_spec = """{
             }
         },
         {
-            "mode": "i",
+            "mode": "m",
             "demand": "mfh3tl1v",
             "generalized_cost": {
                 "link_costs": "@toll3",
@@ -255,7 +255,7 @@ assign_spec = """{
             }
         },
         {
-            "mode": "i",
+            "mode": "m",
             "demand": "mfh3tl2v",
             "generalized_cost": {
                 "link_costs": "@toll3",
@@ -263,7 +263,7 @@ assign_spec = """{
             }
         },
         {
-            "mode": "i",
+            "mode": "m",
             "demand": "mfh3tl3v",
             "generalized_cost": {
                 "link_costs": "@toll3",
@@ -271,7 +271,7 @@ assign_spec = """{
             }
         },
         {
-            "mode": "m",
+            "mode": "i",
             "demand": "mfh3nt1v",
             "generalized_cost": {
                 "link_costs": "@toll3",
@@ -279,7 +279,7 @@ assign_spec = """{
             }
         },
         {
-            "mode": "m",
+            "mode": "i",
             "demand": "mfh3nt2v",
             "generalized_cost": {
                 "link_costs": "@toll3",
@@ -287,7 +287,7 @@ assign_spec = """{
             }
         },
         {
-            "mode": "m",
+            "mode": "i",
             "demand": "mfh3nt3v",
             "generalized_cost": {
                 "link_costs": "@toll3",
@@ -337,23 +337,556 @@ assign_spec = """{
     }
 }"""
 
-#Define Standard Matrix Calculation Specification from Modeller
-
-matrix_calc_spec = """{
-    "expression": "nint(mf1*100)",
-    "result": "mftemp",
-    "constraint": {
-        "by_value": null,
-        "by_zone": null
-    },
-    "aggregation": {
-        "origins": null,
-        "destinations": null
-    },
-    "type": "MATRIX_CALCULATION"
+#Define Standard Generalized Cost Skimming Specification from Modeller
+cost_skim_spec = """{
+    "type": "PATH_BASED_TRAFFIC_ANALYSIS",
+    "classes": [
+        {
+            "results": {
+                "od_travel_times": {
+                    "minimums": null,
+                    "maximums": null,
+                    "averages": null,
+                    "shortest_paths": "mf43"
+                },
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": null
+        },
+        {
+            "results": {
+                "od_travel_times": {
+                    "shortest_paths": "mf44"
+                },
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": null
+        },
+        {
+            "results": {
+                "od_travel_times": {
+                    "shortest_paths": "mf45"
+                },
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": null
+        },
+        {
+            "results": {
+                "od_travel_times": {
+                    "shortest_paths": "mf46"
+                },
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": null
+        },
+        {
+            "results": {
+                "od_travel_times": {
+                    "shortest_paths": "mf47"
+                },
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": null
+        },
+        {
+            "results": {
+                "od_travel_times": {
+                    "shortest_paths": "mf48"
+                },
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": null
+        },
+        {
+            "results": {
+                "od_travel_times": {
+                    "shortest_paths": "mf49"
+                },
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": null
+        },
+        {
+            "results": {
+                "od_travel_times": {
+                    "shortest_paths": "mf50"
+                },
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": null
+        },
+        {
+            "results": {
+                "od_travel_times": {
+                    "shortest_paths": "mf51"
+                },
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": null
+        },
+        {
+            "results": {
+                "od_travel_times": {
+                    "shortest_paths": "mf52"
+                },
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": null
+        },
+        {
+            "results": {
+                "od_travel_times": {
+                    "shortest_paths": "mf53"
+                },
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": null
+        },
+        {
+            "results": {
+                "od_travel_times": {
+                    "shortest_paths": "mf54"
+                },
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": null
+        },
+        {
+            "results": {
+                "od_travel_times": {
+                    "shortest_paths": "mf55"
+                },
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": null
+        },
+        {
+            "results": {
+                "od_travel_times": {
+                    "shortest_paths": "mf56"
+                },
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": null
+        },
+        {
+            "results": {
+                "od_travel_times": {
+                    "shortest_paths": "mf57"
+                },
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": null
+        },
+        {
+            "results": {
+                "od_travel_times": {
+                    "shortest_paths": "mf58"
+                },
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": null
+        },
+        {
+            "results": {
+                "od_travel_times": {
+                    "shortest_paths": "mf59"
+                },
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": null
+        },
+        {
+            "results": {
+                "od_travel_times": {
+                    "shortest_paths": "mf60"
+                },
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": null
+        },
+        {
+            "results": {
+                "od_travel_times": {
+                    "shortest_paths": "mf61"
+                },
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": null
+        },
+        {
+            "results": {
+                "od_travel_times": {
+                    "shortest_paths": "mf62"
+                },
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": null
+        },
+        {
+            "results": {
+                "od_travel_times": {
+                    "shortest_paths": "mf63"
+                },
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": null
+        }
+    ],
+    "path_analysis": null,
+    "cutoff_analysis": null
 }"""
 
-# Create the Matrices in Emme Using the Emme Matrices Dictionary 
+#Define Standard Link Based Attribute (such as time or distance) Skimming Specification from Modeller
+attr_skim_spec = """{
+    "type": "PATH_BASED_TRAFFIC_ANALYSIS",
+    "classes": [
+        {
+            "results": {
+                "od_travel_times": null,
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": {
+                "results": {
+                    "selected_link_volumes": null,
+                    "selected_turn_volumes": null,
+                    "od_values": "mf64"
+                }
+            }
+        },
+        {
+            "results": {
+                "od_travel_times": null,
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": {
+                "results": {
+                    "selected_link_volumes": null,
+                    "selected_turn_volumes": null,
+                    "od_values": "mf65"
+                }
+            }
+        },
+        {
+            "results": {
+                "od_travel_times": null,
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": {
+                "results": {
+                    "selected_link_volumes": null,
+                    "selected_turn_volumes": null,
+                    "od_values": "mf66"
+                }
+            }
+        },
+        {
+            "results": {
+                "od_travel_times": null,
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": {
+                "results": {
+                    "selected_link_volumes": null,
+                    "selected_turn_volumes": null,
+                    "od_values": "mf67"
+                }
+            }
+        },
+        {
+            "results": {
+                "od_travel_times": null,
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": {
+                "results": {
+                    "selected_link_volumes": null,
+                    "selected_turn_volumes": null,
+                    "od_values": "mf68"
+                }
+            }
+        },
+        {
+            "results": {
+                "od_travel_times": null,
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": {
+                "results": {
+                    "selected_link_volumes": null,
+                    "selected_turn_volumes": null,
+                    "od_values": "mf69"
+                }
+            }
+        },
+        {
+            "results": {
+                "od_travel_times": null,
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": {
+                "results": {
+                    "selected_link_volumes": null,
+                    "selected_turn_volumes": null,
+                    "od_values": "mf70"
+                }
+            }
+        },
+        {
+            "results": {
+                "od_travel_times": null,
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": {
+                "results": {
+                    "selected_link_volumes": null,
+                    "selected_turn_volumes": null,
+                    "od_values": "mf71"
+                }
+            }
+        },
+        {
+            "results": {
+                "od_travel_times": null,
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": {
+                "results": {
+                    "selected_link_volumes": null,
+                    "selected_turn_volumes": null,
+                    "od_values": "mf72"
+                }
+            }
+        },
+        {
+            "results": {
+                "od_travel_times": null,
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": {
+                "results": {
+                    "selected_link_volumes": null,
+                    "selected_turn_volumes": null,
+                    "od_values": "mf73"
+                }
+            }
+        },
+        {
+            "results": {
+                "od_travel_times": null,
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": {
+                "results": {
+                    "selected_link_volumes": null,
+                    "selected_turn_volumes": null,
+                    "od_values": "mf74"
+                }
+            }
+        },
+        {
+            "results": {
+                "od_travel_times": null,
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": {
+                "results": {
+                    "selected_link_volumes": null,
+                    "selected_turn_volumes": null,
+                    "od_values": "mf75"
+                }
+            }
+        },
+        {
+            "results": {
+                "od_travel_times": null,
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": {
+                "results": {
+                    "selected_link_volumes": null,
+                    "selected_turn_volumes": null,
+                    "od_values": "mf76"
+                }
+            }
+        },
+        {
+            "results": {
+                "od_travel_times": null,
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": {
+                "results": {
+                    "selected_link_volumes": null,
+                    "selected_turn_volumes": null,
+                    "od_values": "mf77"
+                }
+            }
+        },
+        {
+            "results": {
+                "od_travel_times": null,
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": {
+                "results": {
+                    "selected_link_volumes": null,
+                    "selected_turn_volumes": null,
+                    "od_values": "mf78"
+                }
+            }
+        },
+        {
+            "results": {
+                "od_travel_times": null,
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": {
+                "results": {
+                    "selected_link_volumes": null,
+                    "selected_turn_volumes": null,
+                    "od_values": "mf79"
+                }
+            }
+        },
+        {
+            "results": {
+                "od_travel_times": null,
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": {
+                "results": {
+                    "selected_link_volumes": null,
+                    "selected_turn_volumes": null,
+                    "od_values": "mf80"
+                }
+            }
+        },
+        {
+            "results": {
+                "od_travel_times": null,
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": {
+                "results": {
+                    "selected_link_volumes": null,
+                    "selected_turn_volumes": null,
+                    "od_values": "mf81"
+                }
+            }
+        },
+        {
+            "results": {
+                "od_travel_times": null,
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": {
+                "results": {
+                    "selected_link_volumes": null,
+                    "selected_turn_volumes": null,
+                    "od_values": "mf82"
+                }
+            }
+        },
+        {
+            "results": {
+                "od_travel_times": null,
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": {
+                "results": {
+                    "selected_link_volumes": null,
+                    "selected_turn_volumes": null,
+                    "od_values": "mf83"
+                }
+            }
+        },
+        {
+            "results": {
+                "od_travel_times": null,
+                "link_volumes": null,
+                "turn_volumes": null
+            },
+            "analysis": {
+                "results": {
+                    "selected_link_volumes": null,
+                    "selected_turn_volumes": null,
+                    "od_values": "mf84"
+                }
+            }
+        }
+    ],
+    "path_analysis": {
+        "link_component": "length",
+        "turn_component": null,
+        "operator": "+",
+        "selection_threshold": {
+            "lower": 0,
+            "upper": 999999
+        },
+        "path_to_od_composition": {
+            "considered_paths": "ALL",
+            "operator": "average"
+        }
+    },
+    "cutoff_analysis": null
+}"""
+
+#Define Network Calculator from Modeller
+net_calc_spec = """{
+    "result": "@timau",
+    "expression": "0",
+    "aggregation": null,
+    "selections": {
+        "link": "all"
+    },
+    "type": "NETWORK_CALCULATION"
+}"""
+
+
+# Create/Initialize all the necessary Matrices in Emme
 for x in range(0, 85):
     create_matrix(matrix_id=emme_matrices["classes"][x]["mat_id"],
                   matrix_name=emme_matrices["classes"][x]["mat_name"],
@@ -362,34 +895,48 @@ for x in range(0, 85):
                   overwrite=True,
                   scenario=current_scenario)
 
-# Items to run an assignment,  First we modify the generic spec to work for our time period
-# Modify the Assignment Specifications for the Closure Criteria and Perception Factors
-mod_assign_spec = json.loads(assign_spec)
+# Modify the Assignment Specifications for the Closure Criteria and Perception Factors and Run Emme Path Based Assignment
+mod_assign_spec = json.loads(assignment_spec)
 mod_assign_spec["stopping_criteria"]["max_iterations"]= max_iter
 mod_assign_spec["stopping_criteria"]["best_relative_gap"]= b_rel_gap
 for x in range(0, 21):
     mod_assign_spec["classes"][x]["generalized_cost"]["perception_factor"] = percept_factors["classes"][x]["vot"]
     mod_assign_spec["classes"][x]["demand"] = "mf"+ emme_matrices["classes"][x]["mat_name"]
-
-# Now we call the Emme Path Based Assignment using our modified spec.
+assign_extras(el1 = "@rdly", el2 = "@trnv3")
 assign_traffic(mod_assign_spec)
-skim_traffic(cost_skim_spec)
 
-# Write out All the Skim Files to a Binary format, looping through all of the skim matrices (currently Matrices 22 - 84).
+# Calculate the Pure Time Skims
+mod_net_calc_spec = json.loads(net_calc_spec)
+mod_net_calc_spec["result"] = "@timau"
+mod_net_calc_spec["expression"] = "timau"
+network_calc(mod_net_calc_spec)
+mod_time_skim_spec = json.loads(attr_skim_spec)
+for x in range(0, 21):
+    mod_time_skim_spec["classes"][x]["analysis"]["results"]["od_values"] = emme_matrices["classes"][x+21]["mat_id"]
+mod_time_skim_spec["path_analysis"]["link_component"] = "@timau"
+skim_traffic(mod_time_skim_spec)
+
+# Calculate the Cost Skims
+mod_cost_skim_spec = json.loads(cost_skim_spec)
+for x in range(0, 21):
+    mod_cost_skim_spec["classes"][x]["results"]["od_travel_times"]["shortest_paths"] = emme_matrices["classes"][x+42]["mat_id"]
+skim_traffic(mod_cost_skim_spec)
+
+# Calculate the Distance Skims
+mod_dist_skim_spec = json.loads(attr_skim_spec)
+for x in range(0, 21):
+    mod_dist_skim_spec["classes"][x]["analysis"]["results"]["od_values"] = emme_matrices["classes"][x+63]["mat_id"]
+mod_dist_skim_spec["path_analysis"]["link_component"] = "length"
+skim_traffic(mod_dist_skim_spec)
+
+# Write out All the Skim Files to the new Binary format (currently Matrices 22 - 84).
 for x in range (22, 85):
     skim_matrix_id = emmebank.matrix("mf"+`x`)
-    #output_matrix_id = emmebank.matrix("mftemp01")
-    #mod_mat_spec = json.loads(matrix_calc_spec)
-    #mat_calc = "nint(mf"+`x`+"*100)"
-    #mod_mat_spec["result"]="mftemp01"
-    #mod_mat_spec["expression"]=mat_calc
-    #calculate_matrix(mod_mat_spec)
     skim_mat_name = emmebank.matrix(skim_matrix_id).name
     skim_mat_val = inro.emme.database.matrix.FullMatrix.get_data(skim_matrix_id,current_scenario)
     skim_filename = os.path.join(os.path.dirname(emmebank.path), 'Skims\\'+skim_mat_name+'.out')
     inro.emme.matrix.MatrixData.save(skim_mat_val,skim_filename)
-    
-#convert_to_csv(matrices=["mf1","mf2","mf3","mf4","mf5"])
 
 my_desktop.close()
 
+print 'This assignment and skim creation took', (time.time()-start_of_run)/60, 'minutes to execute.'

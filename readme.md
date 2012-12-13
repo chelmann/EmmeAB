@@ -138,6 +138,6 @@ Naming convention is: class (2 characters), toll/notoll(2 characters), income (1
 	84. hvtrkc - Heavy Truck Distance
 
 
-Each skim matrix is being first converted to an integer before it is output to the binary file (note - right now, the binary file still appears to be a float even though the numbers in it are integers).  This is accomplished by multiplying the skim by 100 and using Emme's nInt function to round it to an integer.  The original skims are left as floats in Emme and the conversion occurs via a temporary matrix before outputting.
+The code creates three sets of skims for use by DaySim - pure time, generalized cost and distance.  All three skim procedures utilize the standard path based assignment analysis tollkits from Modeller.  The pure time skims are created by skimming timau across all paths, distance skims are based on link length and the generalized cost skims use the conversion of toll costs to time via values of time as noted above.
 
-The next step is to implement the skimming procedures for time, cost and distancwe
+Current runtime using zero volume demand is slightly under 34 minutes.  The next step will be the creation of demand by user class ot further test runtime impacts of our current classification system.
