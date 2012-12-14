@@ -1,14 +1,53 @@
-Start of the Emme to DaySim Python code
+#PSRC's Emme 4.0 Assignments to DaySim Activity Based Model Python Code#
 
-As of December 11th, 2012
+##Background##
+This code is intended to control the exchange of data between the PSRC's network model in Inro's Emme 4.0 software to our new Activity Based Model (ABM) system that is being developed in the DaySim software. DaySim requires several measures of accessibility from our network model in the form of matrices of travel times, costs, and distances. This Python code is intended to:
 
-The first step of this code is to get all the necessary matrices into Emme via the Python Code and set an assignment to run.
+	+ Import estimates of personal travel by vehicle class and time of day from DaySim
+	+ Estimate Truck Trips by time of day for:
+		- Light Trucks
+		- Medium Trucks
+		- Heavy Trucks
+	+ Estimate any special generators of travel not captured in DaySim for items like
+		- External Stations
+		- Sport's Stadiums
+		- Airports
+		- Convention Centers
+	+ Run Higway, Transit and Non-Motorized Assignments for various vehicle classes and times of day
+	+ Generate matrices of travel information related to Time, Cost and Distance for all od-pairs in our 4000 zone travel model system.
 
-In order to utilize faster movement of matrices from Emme to DaySim, Inro has provided us with some very nice binary transfer api's that exist in a version of Emme that we now use (Emme Desktop test-4.0.3-MatrixBinaryFormat).  These API's will make it into future versions of Emme.
+The vehicle skims include 756 matrices (12 time periods x 63 skims). Previous data exchanges between our model systems relied upon transfer via comma-separated formats.  These data outputs took on the order of 15 seconds per matrix. When applied to our new travel model system, this would require over 3 hours of machine time simply outputting the matrices. In order to utilize faster movement of matrices from Emme to DaySim, Inro has provided us with new binary transfer API’s that exist in a version of Emme that we now use (Emme Desktop test-4.0.3-MatrixBinaryFormat).  These API's will make it into future versions of Emme and allow the transfer of all our matrices in under 10 minutes.
 
-Code right now launches an instance of Emme using the GUI.  Path to a project file is hard coded for now, but we should change this soon.
+##Time Periods##
+DaySim calculates travel for all hours of the day.  In order to provide meaningful accessibility data to DaySim and still maintain reasonable model run times, the PSRC network model will be various time periods per day for various modal purposes.  The difference by mode reflects the availability of network related data b ymode and time of day.  
 
-Assignment Specifications are currently set to work for a 21 class assignment as needed by DaySim.  The 21 classes are:
+###Time Periods for Highway Assignments###
+The time periods for Highway Assignments are are defined as:
+ 
+	1. Early AM		5:00 am - 6:00 am
+	2. AM Peak Hour 1	6:00 am - 7:00 am
+	3. AM Peak Hour 2	7:00 am - 8:00 am
+	4. AM Peak Hour 3	8:00 am - 9:00 am
+	5. AM Peak Hour 4	9:00 am - 10:00 am
+	6. Midday		10:00 am - 2:00 pm
+	7. PM Peak Hour 1	2:00 pm - 3:00 pm
+	8. PM Peak Hour 2	3:00 pm - 4:00 pm
+	9. PM Peak Hour 3	4:00 pm - 5:00 pm
+	10. PM Peak Hour 4	5:00 pm - 6:00 pm
+	11. Evening		6:00 pm – 8:00 pm
+	12. Overnight		8:00 pm - 5:00 am
+
+###Time Periods for Transit Assignments###
+The time periods for Transit Assignments are are defined as:
+ 
+	1. AM			6:00 am - 9:00 am
+	2. Midday		9:00 am - 3:00 pm
+	3. PM			3:00 pm - 6:00 pm
+	4. Evening		6:00 pm - 8:00 pm
+	5. Night		8:00 pm - 6:00 am
+
+###Vehicle Classification for Highway Assignments###
+Assignment Specifications are currently set to work for a 21 class assignments as needed by DaySim.  The 21 classes are:
 
 	1. SOV Toll Income Level 1
 	2. SOV Toll Income Level 2
@@ -32,22 +71,25 @@ Assignment Specifications are currently set to work for a 21 class assignment as
 	20. Medium Trucks
 	21. Heavy Trucks
 
+###Value of Time###
 The value of time categories used the assignment are coming from DaySim and are:
 
-	Class	$ per Hour		
-		Cat #1	Cat #2	Cat #3
+	Class		$ per Hour		
+			Cat #1	Cat #2	Cat #3
 	SOV		$2.00	$8.00	$20.00
-	HOV 2	$4.00	$16.00	$40.00
-	HOV 3+	$6.00	$24.00	$60.00
-	Trucks	$40.00	$45.00	$50.00		
+	HOV 2		$4.00	$16.00	$40.00
+	HOV 3+		$6.00	$24.00	$60.00
+	Trucks		$40.00	$45.00	$50.00		
 
-	Class	minutes per cent		
-		Cat #1	Cat #2	Cat #3
+	Class		minutes per cent		
+			Cat #1	Cat #2	Cat #3
 	SOV		0.3000	0.0750	0.0300
-	HOV 2	0.1500	0.0375	0.0150
-	HOV 3+	0.1000	0.0250	0.0100
-	Trucks	0.0150	0.0133	0.0120
+	HOV 2		0.1500	0.0375	0.0150
+	HOV 3+		0.1000	0.0250	0.0100
+	Trucks		0.0150	0.0133	0.0120
 
+
+###Matrix Definition###
 The code uses the Emme Tool for creating matrices to create the 84 total demand and skim matrices needed for the model run.  The code overwrites any existing matrices as DaySim will be feeding new demand each time it access Emme for skimming and the skims should change due to the new demand.  There are 21 demand trip tables and 63 total skim tables being created for auto modes (time, cost and distance).  
 
 Naming convention is: class (2 characters), toll/notoll(2 characters), income (1 number), type (1 character)
@@ -133,11 +175,11 @@ Naming convention is: class (2 characters), toll/notoll(2 characters), income (1
 	79. h3nt1d - HOV 3+ No Toll Income Level 1 Distance
 	80. h3nt2d - HOV 3+ No Toll Income Level 1 Distance
 	81. h3nt3d - HOV 3+ No Toll Income 
-	82. lttrkc - Light Truck Distance
-	83. mdtrkc - Medium Truck Distance
-	84. hvtrkc - Heavy Truck Distance
+	82. lttrkd - Light Truck Distance
+	83. mdtrkd - Medium Truck Distance
+	84. hvtrkd - Heavy Truck Distance
 
+###Vehicle Matrix Calculations###
+The code creates three sets of skims for use by DaySim - travel time, generalized cost and distance.  All three skim procedures utilize the standard path based assignment analysis toolkits from Emme Modeller.  The travel time skims are created by skimming auto time (timau) across all paths, distance skims are based on link length and the generalized cost skims use the conversion of toll costs to time via values of time as noted above.
 
-The code creates three sets of skims for use by DaySim - pure time, generalized cost and distance.  All three skim procedures utilize the standard path based assignment analysis tollkits from Modeller.  The pure time skims are created by skimming timau across all paths, distance skims are based on link length and the generalized cost skims use the conversion of toll costs to time via values of time as noted above.
-
-Current runtime using zero volume demand is slightly under 34 minutes.  The next step will be the creation of demand by user class ot further test runtime impacts of our current classification system.
+Current runtime using zero volume demand is slightly under 34 minutes.  The next step will be the creation of demand by user class to further test runtime impacts of our current classification system.
