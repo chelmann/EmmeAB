@@ -1,0 +1,35 @@
+{"origin_inputs": [
+{"mat_id": "mo01", "mat_name": "agshar", "mat_desc": "Agriculture Shares"}, 
+{"mat_id": "mo02", "mat_name": "const", "mat_desc": "Construction Shares"},
+{"mat_id": "mo03", "mat_name": "eqshar", "mat_desc": "Manufacturing Equipment Shares"},
+{"mat_id": "mo04", "mat_name": "minshr", "mat_desc": "Mining Shares"},
+{"mat_id": "mo05", "mat_name": "prodsh", "mat_desc": "Manufacturing Products Shares"},
+{"mat_id": "mo06", "mat_name": "tcushr", "mat_desc": "TCU Shares"},
+{"mat_id": "mo07", "mat_name": "whlssh", "mat_desc": "Wholesale Shares"},
+{"mat_id": "mo08", "mat_name": "manu", "mat_desc": "Manufacturing Employment"},
+{"mat_id": "mo09", "mat_name": "wtcu", "mat_desc": "WTCU Employment"},
+{"mat_id": "mo10", "mat_name": "retail", "mat_desc": "Retail Employment"},
+{"mat_id": "mo11", "mat_name": "fires", "mat_desc": "FIRES Employment"},
+{"mat_id": "mo12", "mat_name": "govt", "mat_desc": "Government Employment"},
+{"mat_id": "mo13", "mat_name": "edu", "mat_desc": "Education Employment"},
+{"mat_id": "mo14", "mat_name": "hhld", "mat_desc": "Total Households"}
+],
+"origin_outputs": [
+{"mat_id": "mo15", "mat_name": "agffsh", "mat_desc": "Agriculture Employment"}, 
+{"mat_id": "mo16", "mat_name": "mining", "mat_desc": "Mining Employment"},
+{"mat_id": "mo17", "mat_name": "manu-p", "mat_desc": "Manufacturing Production"},
+{"mat_id": "mo18", "mat_name": "manu-e", "mat_desc": "Manufacturing Equipment"},
+{"mat_id": "mo19", "mat_name": "tcu", "mat_desc": "TCU Employment"},
+{"mat_id": "mo20", "mat_name": "whls", "mat_desc": "Wholesale Employment"}
+],
+"destination_inputs": [
+{"mat_id": "md01", "mat_name": "spllgt", "mat_desc": "Light Trucks in SR-167 Corridor"},
+{"mat_id": "md02", "mat_name": "splmed", "mat_desc": "Medium Trucks in SR-167 Corridor"},
+{"mat_id": "md03", "mat_name": "splhvy", "mat_desc": "Heavy Trucks in SR-167 Corridor"}
+],
+"full":[
+{"mat_id": "mf01", "mat_name": "lgtdst", "mat_desc": "Light Truck Distribution"},
+{"mat_id": "mf02", "mat_name": "meddst", "mat_desc": "Medium Truck Distribution"},
+{"mat_id": "mf03", "mat_name": "hvydst", "mat_desc": "Heavy Truck Distribution"}
+]
+}

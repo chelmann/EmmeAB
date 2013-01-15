@@ -16,7 +16,7 @@ This code is intended to control the exchange of data between the PSRC's network
 	+ Run Higway, Transit and Non-Motorized Assignments for various vehicle classes and times of day
 	+ Generate matrices of travel information related to Time, Cost and Distance for all od-pairs in our 4000 zone travel model system.
 
-The vehicle skims include 756 matrices (12 time periods x 63 skims). Previous data exchanges between our model systems relied upon transfer via comma-separated formats.  These data outputs took on the order of 15 seconds per matrix. When applied to our new travel model system, this would require over 3 hours of machine time simply outputting the matrices. In order to utilize faster movement of matrices from Emme to DaySim, Inro has provided us with new binary transfer API’s that exist in a version of Emme that we now use (Emme Desktop test-4.0.3-MatrixBinaryFormat).  These API's will make it into future versions of Emme and allow the transfer of all our matrices in under 10 minutes.
+The vehicle skims include 756 matrices (12 time periods x 63 skims). Previous data exchanges between our model systems relied upon transfer via comma-separated formats.  We have implemented code that utilizes an HDF5 database as a storage container for all Emme model output.  The intent is to use hdf5 during runtime for all model processes as there are a variety of api's in various languages to access the data. For now we are assuming an HDF5 database for each time period but this might change as we move forward with implementation.
 
 ##Time Periods##
 DaySim calculates travel for all hours of the day.  In order to provide meaningful accessibility data to DaySim and still maintain reasonable model run times, the PSRC network model will be various time periods per day for various modal purposes.  The difference by mode reflects the availability of network related data b ymode and time of day.  
@@ -182,4 +182,3 @@ Naming convention is: class (2 characters), toll/notoll(2 characters), income (1
 ###Vehicle Matrix Calculations###
 The code creates three sets of skims for use by DaySim - travel time, generalized cost and distance.  All three skim procedures utilize the standard path based assignment analysis toolkits from Emme Modeller.  The travel time skims are created by skimming auto time (timau) across all paths, distance skims are based on link length and the generalized cost skims use the conversion of toll costs to time via values of time as noted above.
 
-Current runtime using zero volume demand is slightly under 34 minutes.  The next step will be the creation of demand by user class to further test runtime impacts of our current classification system.

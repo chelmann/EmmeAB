@@ -1,0 +1,84 @@
+ ~$>start
+ ********************************************************************************
+ * Macro File Name: TRUCK_PA.MAC                                                *
+ * Original Date: 03/30/2004                                                    *
+ * Revised Date:                                                                *
+ * Purpose: Computes truck productions and attractions by light, medium, and    *
+ *          and heavy classes.                                                  *
+ * Input Files:                                                                 *
+ * Temporary Files:                                                             *
+ * Output Files:                                                                *
+ * Notes:                                                                       *
+ * Report File: TRUCK_PA.RPT                                                    *
+ ********************************************************************************
+ ~:start 
+ reports=TRUCK_PA.RPT
+ 3.21
+ ~/Light Trucks: Productions
+ ~+|1|y|mo"LTPro"|n|0.4102*(mo"AgFFsh"+mo"Mining"+mo"const")
+ +0.3466*(mo"Manu-P"+mo"Manu-E"+mo"TCU"+mo"Whls")
+ +0.3281*mo"Retail"
+ +0.1615*(mo"FIRES"+mo"GovEdu")
+ +0.0928*mo"hhld"
+ ~+|||n|2
+ ~/Medium Trucks: Productions
+ ~+|1|y|mo"MTPro"|n|0.0889*(mo"AgFFsh"+mo"Mining")
+ +0.0998*mo"const"
+ +0.0858*(mo"Manu-P"+mo"Manu-E")
+ +0.2079*mo"TCU"
+ +0.2552*mo"Whls"
+ +0.1637*mo"Retail"
+ +0.0434*mo"FIRES"
+ +0.0297*mo"GovEdu"
+ +0.0358*mo"hhld"
+ ~+|||n|2
+ ~/Heavy Trucks: Productions
+ ~+|1|y|mo"HTPro"|n|0.2366*mo"AgFFsh"
+ +0.3405*mo"Mining"
+ +0.0856*mo"const"
+ +0.2661*mo"Manu-P"
+ +0.0953*mo"Manu-E"
+ +0.1075*mo"TCU"
+ +0.1337*mo"Whls"
+ +0.0463*mo"Retail"
+ +0.0044*mo"FIRES"
+ +0.0068*mo"GovEdu"
+ +0.0031*mo"hhld"
+ ~+|||n|2
+ ~/Light Trucks: Attractions
+ ~+|1|y|mo"LTAtt"|n|1.3161*mo"AgFFsh"
+ +47.9052*mo"Mining"
+ +0.2585*mo"const"
+ +0.2581*(mo"Manu-P"+mo"Manu-E")
+ +0.5082*mo"TCU"
+ +0.1464*mo"Whls"
+ +0.0501*mo"Retail"
+ +0.1591*mo"FIRES"
+ +0.0966*mo"GovEdu"
+ +0.1732*mo"hhld"
+ ~+|||n|2
+ ~/Medium Trucks: Attractions
+ ~+|1|y|mo"MTAtt"|n|0.2831*mo"AgFFsh"
+ +14.8073*mo"Mining"
+ +0.0876*mo"const"
+ +0.0538*(mo"Manu-P"+mo"Manu-E")
+ +0.0998*mo"TCU"
+ +0.0352*mo"Whls"
+ +0.0123*mo"Retail"
+ +0.0375*mo"FIRES"
+ +0.0160*mo"GovEdu"
+ +0.0385*mo"hhld"
+ ~+|||n|2
+ ~/Heavy Trucks: Attractions
+ ~+|1|y|mo"HTAtt"|n|0.0988*mo"AgFFsh"
+ +5.0897*mo"Mining"
+ +0.0290*mo"const"
+ +0.0208*(mo"Manu-P"+mo"Manu-E")
+ +0.0378*mo"TCU"
+ +0.0087*mo"Whls"
+ +0.0032*mo"Retail"
+ +0.0088*mo"FIRES"
+ +0.0073*mo"GovEdu"
+ +0.0071*mo"hhld"
+ ~+|||n|2
+ q

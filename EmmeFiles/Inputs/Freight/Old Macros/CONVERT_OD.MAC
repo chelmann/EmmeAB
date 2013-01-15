@@ -1,0 +1,22 @@
+ ~$>start
+ ********************************************************************************
+ * Macro File Name: CONVERT_OD.MAC                                              *
+ * Original Date: 12/10/2002                                                    *
+ * Revised Date:                                                                *
+ * Purpose: Converts mo"LTATT", mo"MDATT", and mo"HTATT" to md"LTATT",          *
+ *          md"MDATT", and md"HTATT", respectively.                             *
+ * Input Files:                                                                 *
+ * Temporary Files:                                                             *
+ * Output Files:                                                                *
+ * Notes:                                                                       *
+ * Report File: CONVERT_OD.RPT                                                  *
+ ********************************************************************************
+ ~:start
+ ~z=%o%
+ ~o=39
+ reports=CONVERT_OD.RPT
+ 3.21
+ ~+|1|y|md"LTAtt"|n|mo"LTAtt"'|||y|*|2
+ ~+|1|y|md"MTAtt"|n|mo"MTAtt"'|||y|*|2
+ ~+|1|y|md"HTAtt"|n|mo"HTAtt"'|||y|*|2
+ q

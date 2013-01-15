@@ -1,0 +1,28 @@
+ ~$>start
+ ********************************************************************************
+ * Macro File Name: SPLGEN.MAC                                                  *
+ * Original Date: 03/20/2006                                                    *
+ * Revised Date:                                                                *
+ * Purpose: Adds special generated truck trips to light, medium, and heavy      *
+ *          truck attractions.                                                  *
+ * Input Files:                                                                 *
+ * Temporary Files:                                                             *
+ * Output Files:                                                                *
+ * Notes:                                                                       *
+ * Report File: SPLGEN.RPT                                                      *
+ ********************************************************************************
+ ~:start
+ batchin=?
+ 3.11
+ ~+|inputtrk\splhvy.in|2
+ 3.11
+ ~+|inputtrk\spllgt.in|2
+ 3.11
+ ~+|inputtrk\splmed.in|2
+ ~/
+ reports=SPLGEN.RPT
+ 3.21
+ ~+|1|y|md"HTAtt"|n|md"HTAtt"+md"splhvy"|||n|2
+ ~+|1|y|md"LTAtt"|n|md"LTAtt"+md"spllgt"|||n|2
+ ~+|1|y|md"MTAtt"|n|md"MTAtt"+md"splmed"|||n|2
+ q

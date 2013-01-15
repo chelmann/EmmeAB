@@ -1,20 +1,20 @@
 import array as _array
 import inro.emme.desktop.app as app
 import inro.modeller as _m
-import inro.emme.matrix
+import inro.emme.matrix as ematrix
 import inro.emme.database.matrix
 import json
-import numpy as _np
+import numpy as np
 import time
-import timeit
 import os
+import h5py
 
 # Start an instance of Emme - for now this is using the GUI
 start_of_run = time.time()
 my_desktop = app.start_dedicated(False, "cth", 'C:\Users\craig\Documents\ABM\ABM.emp')
 my_modeller = _m.Modeller(my_desktop)
 
-# Emme and Modeller Tools we used for the assignment and skimming processes
+# Emme and Modeller Tools we use for the assignment and skimming processes
 manage_vdfs = _m.Modeller().tool("inro.emme.data.function.function_transaction")
 create_matrix = _m.Modeller().tool("inro.emme.data.matrix.create_matrix")
 assign_extras = _m.Modeller().tool("inro.emme.traffic_assignment.set_extra_function_parameters")
@@ -24,6 +24,7 @@ network_calc = _m.Modeller().tool("inro.emme.network_calculation.network_calcula
 create_extras = _m.Modeller().tool("inro.emme.data.extra_attribute.create_extra_attribute")
 delete_extras = _m.Modeller().tool("inro.emme.data.extra_attribute.delete_extra_attribute")
 import_attrs = _m.Modeller().tool("inro.emme.data.network.import_attribute_values")
+import_csv = _m.Modeller().tool("inro.emme.data.matrix.import_matrix_from_csv")
 
 # Assignment Convergence Criteria
 max_iter = 50
@@ -36,7 +37,57 @@ default_path = os.path.dirname(_m.Modeller().emmebank.path).replace("\\","/")
 function_file = os.path.join(default_path,"Inputs/VDFs/early_am_vdfs.in").replace("\\","/")
 manage_vdfs(transaction_file = function_file,throw_on_error = True)
 
-# Function to Calculate Arterial Network Delay
+#Function to Define Truck Model
+def truck_generation(bank, path, current_scenario):
+
+    start_truck_generation = time.time()
+
+    #Create the necessary vectors and read in the employment data
+    
+    truck_matrix_file = os.path.join(path,"Inputs/Freight/truck_matrices.txt").replace("\\","/")
+    truck_matrices = json.load(open(truck_matrix_file))  
+    
+    #Create the Origin Input Matrices and Read the Values in from the CSV Files
+    for x in range(0,len(truck_matrices['origin_inputs'])):
+        truck_matrix_name = truck_matrices["origin_inputs"][x]["mat_name"]
+        create_matrix(matrix_id=truck_matrices["origin_inputs"][x]["mat_id"],
+                      matrix_name=truck_matrix_name,
+                      matrix_description=truck_matrices["origin_inputs"][x]["mat_desc"],
+                      default_value=0,
+                      overwrite=True,
+                      scenario=current_scenario)
+        import_csv(matrix=truck_matrices["origin_inputs"][x]["mat_id"],
+                   file_path=os.path.join(os.path.dirname(bank.path), 'Inputs/Freight/'+truck_matrix_name+'.csv'),
+                   scenario=current_scenario)
+    
+    #Create the Destination Matrices and Read the Values in from the CSV Files
+    for x in range(0,len(truck_matrices['destination_inputs'])):
+        truck_matrix_name = truck_matrices["destination_inputs"][x]["mat_name"]
+        create_matrix(matrix_id=truck_matrices["destination_inputs"][x]["mat_id"],
+                      matrix_name=truck_matrix_name,
+                      matrix_description=truck_matrices["destination_inputs"][x]["mat_desc"],
+                      default_value=0,
+                      overwrite=True,
+                      scenario=current_scenario)
+        import_csv(matrix=truck_matrices["destination_inputs"][x]["mat_id"],
+                   file_path=os.path.join(os.path.dirname(bank.path), 'Inputs/Freight/'+truck_matrix_name+'.csv'),
+                   scenario=current_scenario)
+
+    #Create the Origin Output Matrices
+    for x in range(0,len(truck_matrices['origin_outputs'])):
+        truck_matrix_name = truck_matrices["origin_outputs"][x]["mat_name"]
+        create_matrix(matrix_id=truck_matrices["origin_outputs"][x]["mat_id"],
+                      matrix_name=truck_matrix_name,
+                      matrix_description=truck_matrices["origin_outputs"][x]["mat_desc"],
+                      default_value=0,
+                      overwrite=True,
+                      scenario=current_scenario)
+
+    end_truck_generation = time.time()
+    print 'It took', (end_truck_generation-start_truck_generation), 'seconds to generate truck trips.'
+
+#Function to Calculate Arterial Network Delay
+
 def arterial_delay_calc(bank, link_calculator, node_calculator):
     
     start_arterial_calc = time.time()
@@ -118,7 +169,7 @@ def arterial_delay_calc(bank, link_calculator, node_calculator):
     end_arterial_calc = time.time()
     print 'It took', (end_arterial_calc-start_arterial_calc), 'seconds to calculate Signal Delay.'
 
-def extra_atrr(bank):
+def extra_attr(bank):
     
     start_extra_attr = time.time()
     
@@ -185,7 +236,7 @@ def extra_attr_import(bank):
 
     print 'It took', (end_extra_attr_import-start_extra_attr_import), 'seconds to read in the Attributes from Text File for the model run.'
     
-# Function to run our Standard Emme Path Based Traffic Assignment using 21 Vehicle Classes
+# Function to run our Standard Emme Path Based Traffic Assignment 
 def traffic_assignment(bank, assignment_specifications):
     
     start_traffic_assignment = time.time()
@@ -195,9 +246,9 @@ def traffic_assignment(bank, assignment_specifications):
     mod_assign["stopping_criteria"]["max_iterations"]= max_iter
     mod_assign["stopping_criteria"]["best_relative_gap"]= b_rel_gap
     
-    for x in range(0, 21):
+    for x in range (0, len(mod_assign["classes"])):
         mod_assign["classes"][x]["generalized_cost"]["perception_factor"] = vot_categories["classes"][x]["vot"]
-        mod_assign["classes"][x]["demand"] = "mf"+ emme_matrices["classes"][x]["mat_name"]
+        mod_assign["classes"][x]["demand"] = "mf"+ emme_matrices["Demand"][x]["mat_name"]
     
     assign_extras(el1 = "@rdly", el2 = "@trnv3")
     assign_traffic(mod_assign)
@@ -205,7 +256,7 @@ def traffic_assignment(bank, assignment_specifications):
     end_traffic_assignment = time.time()
     print 'It took', (end_traffic_assignment-start_traffic_assignment)/60, 'minutes to run the assignment.'
 
-# Function to skim network for travel time for 21 vehicle classes
+# Function to skim network for Travel Time
 def time_skims(bank, skim_specification, link_calculator):
 
     start_time_skim = time.time()
@@ -221,8 +272,8 @@ def time_skims(bank, skim_specification, link_calculator):
 
     # Modify Skim Specification to use @timau and run pure time skim
     mod_skim = skim_specification
-    for x in range(0, 21):
-        mod_skim["classes"][x]["analysis"]["results"]["od_values"] = emme_matrices["classes"][x+21]["mat_id"]
+    for x in range (0, len(mod_skim["classes"])):
+        mod_skim["classes"][x]["analysis"]["results"]["od_values"] = emme_matrices["Time Skims"][x]["mat_id"]
     mod_skim["path_analysis"]["link_component"] = "@timau"
     skim_traffic(mod_skim)
 
@@ -233,33 +284,33 @@ def time_skims(bank, skim_specification, link_calculator):
     print 'It took', (end_time_skim-start_time_skim)/60, 'minutes to calculate the time skims.'
 
 
-# Function to skim network for generalized cost for 21 vehicle classes
+# Function to skim network for Generalized Cost
 def gc_skims(bank, skim_specification):
     
     start_gc_skim = time.time()
 
     mod_skim = skim_specification
-    for x in range(0, 21):
-        mod_skim["classes"][x]["results"]["od_travel_times"]["shortest_paths"] = emme_matrices["classes"][x+42]["mat_id"]
+    for x in range (0, len(mod_skim["classes"])):
+        mod_skim["classes"][x]["results"]["od_travel_times"]["shortest_paths"] = emme_matrices["Cost Skims"][x]["mat_id"]
     skim_traffic(mod_skim)
 
     end_gc_skim = time.time()
     print 'It took', (end_gc_skim-start_gc_skim)/60, 'minutes to calculate the generalized cost skims.'
 
-# Function to skim network for volume for 21 vehicle classes
+# Function to skim network for Volume
 def volume_skims(bank, skim_specification):
     
     start_vol_skim = time.time()
 
     mod_skim = skim_specification
-    for x in range(0, 21):
-        mod_skim["classes"][x]["results"]["link_volumes"] = emme_matrices["classes"][x]["attr_name"]
+    for x in range (0, len(mod_skim["classes"])):
+        mod_skim["classes"][x]["results"]["link_volumes"] = emme_matrices["Demand"][x]["attr_name"]
     skim_traffic(mod_skim)
 
     end_vol_skim = time.time()
     print 'It took', (end_vol_skim-start_vol_skim), 'seconds to calculate the generalized cost skims.'
 
-# Function to skim network for distance for 21 vehicle classes
+# Function to skim network for Distance
 def distance_skims(bank, skim_specification, link_calculator):
 
     start_distance_skim = time.time()
@@ -273,10 +324,10 @@ def distance_skims(bank, skim_specification, link_calculator):
     mod_calcs["expression"] = "length"
     network_calc(mod_calcs)
 
-    # Modify Skim Specification to use @timau and run pure time skim
+    # Modify Skim Specification to use @dist and run ditance skim
     mod_skim = skim_specification
-    for x in range(0, 21):
-        mod_skim["classes"][x]["analysis"]["results"]["od_values"] = emme_matrices["classes"][x+63]["mat_id"]
+    for x in range (0, len(mod_skim["classes"])):
+        mod_skim["classes"][x]["analysis"]["results"]["od_values"] = emme_matrices["Distance Skims"][x]["mat_id"]
     mod_skim["path_analysis"]["link_component"] = "@dist"
     skim_traffic(mod_skim)
 
@@ -286,7 +337,7 @@ def distance_skims(bank, skim_specification, link_calculator):
     end_distance_skim = time.time()
     print 'It took', (end_distance_skim-start_distance_skim)/60, 'minutes to calculate the distance skims.'
 
-    # Function to Export Skims
+    # Function to Export Skims using Binary Format
 def export_skims(bank):
 
     start_export_skims = time.time()
@@ -300,6 +351,109 @@ def export_skims(bank):
 
     end_export_skims = time.time()
     print 'It took', (end_export_skims-start_export_skims)/60, 'minutes to export all skims.'
+
+def create_hdf5_emme_container(bank,my_groups):
+    
+    default_path = os.path.dirname(_m.Modeller().emmebank.path).replace("\\","/")
+
+    hdf_filename = os.path.join(os.path.dirname(bank.path), 'Skims\\Early_AM.hdf5')
+    my_store=h5py.File(hdf_filename, "w")
+
+    #Create Groups for all Matrix Types in Matrix Library with teh exception of Temporary Matrices
+    for x in my_groups:
+
+        if x !="Temporary Matrices":
+            my_store.create_group(x)
+
+    return my_store
+    
+
+def emme_to_hdf5(bank,my_groups):
+
+    start_export_hdf5 = time.time()
+
+    #Create the HDF5 Container using group Names Matching Emme Matix Library
+    my_store = create_hdf5_emme_container(bank, my_groups)
+
+    # First Store a Dataset containing the Indicices for the Array to Matrix (any matrix will do)
+    mat_id=bank.matrix("mf01")
+    em_val=inro.emme.database.matrix.FullMatrix.get_data(mat_id,current_scenario)
+    my_store.create_dataset("indices", data=em_val.indices)
+
+    # Loop through the Subgroups in the HDF5 Container
+    for x in my_groups:
+
+        if x !="Temporary Matrices":
+            
+            # Now Loop through the Emme Trip Tables in HDF5, multiply by 100 (except demand) and convert to Integers
+            for y in range (0, len(my_groups[x])):
+                matrix_id= my_groups[x][y]["mat_id"]
+                if x=="Demand":
+                    matrix_value = np.matrix(bank.matrix(matrix_id).raw_data)
+                else:
+                    matrix_value = np.matrix(bank.matrix(matrix_id).raw_data)*100 
+            
+                my_store[x].create_dataset(bank.matrix(matrix_id).name, data=matrix_value.astype(int))
+
+    my_store.close()
+
+    end_export_hdf5 = time.time()
+
+    print 'It took', (end_export_hdf5-start_export_hdf5)/60, 'minutes to export all skims to the HDF5 File.'
+
+def hdf5_to_emme(bank,my_groups):
+
+    start_import_hdf5 = time.time()
+    default_path = os.path.dirname(_m.Modeller().emmebank.path).replace("\\","/")
+
+    hdf_filename = os.path.join(os.path.dirname(bank.path), 'Skims/Early_AM.hdf5')
+
+    current_scenario = _m.Modeller().desktop.data_explorer().primary_scenario.core_scenario.ref
+    bank = current_scenario.emmebank
+
+    zones=current_scenario.zone_numbers
+
+    for x in my_groups:
+
+        if x =="Demand":
+            
+            # Now Loop through the Emme Trip Tables in HDF5, multiply by 100 (except demand) and convert to Integers
+            for y in range (0, len(my_groups[x])):
+                matrix_id= my_groups[x][y]["mat_id"]
+                if x=="Demand":
+                    em_mat_id= my_groups[x][y]["mat_id"]
+                    em_mat_name = my_groups[x][y]["mat_name"]
+                    hdf_matrix = hdf_file[x][em_mat_name]
+                    np_matrix = np.matrix(hdf_matrix)
+                    np_matrix = np_matrix.astype(float) / 100
+                    np_array = np.squeeze(np.asarray(np_matrix))
+                    emme_matrix = ematrix.MatrixData(indices=[zones,zones],type='f')
+                    emme_matrix.raw_data=[_array.array('f',row) for row in np_array]
+                    bank.matrix(em_mat_id).set_data(emme_matrix,current_scenario)
+
+    end_import_hdf5 = time.time()
+
+    print 'It took', (end_import_hdf5-start_import_hdf5)/60, 'minutes to import matrices to Emme.'
+
+def emme_matrix_initial(bank,my_dict):
+
+    start_emme_initial = time.time()
+
+    current_scenario = _m.Modeller().desktop.data_explorer().primary_scenario.core_scenario.ref
+
+    for x in my_dict:
+
+        for y in range (0, len(my_dict[x])):
+            create_matrix(matrix_id= my_dict[x][y]["mat_id"],
+                          matrix_name= my_dict[x][y]["mat_name"],
+                          matrix_description= my_dict[x][y]["mat_desc"],
+                          default_value=0,
+                          overwrite=True,
+                          scenario=current_scenario)
+
+    end_emme_initial = time.time()
+
+    print 'It took', (end_emme_initial-start_emme_initial), 'seconds to intialize matrices in Emme.'
 
 # Load various dictionaries from text files
 vot_file = os.path.join(default_path,"Inputs/early_am_vot.txt").replace("\\","/")
@@ -341,25 +495,21 @@ node_calc_spec = """{
     "type": "NETWORK_CALCULATION"
 }"""
 
-# Create/Initialize all the necessary Matrices in Emme
-#for x in range(0, 85):
-#    create_matrix(matrix_id=emme_matrices["classes"][x]["mat_id"],
-#                  matrix_name=emme_matrices["classes"][x]["mat_name"],
-#                  matrix_description=emme_matrices["classes"][x]["mat_desc"],
-#                  default_value=0,
-#                  overwrite=True,
-#                  scenario=current_scenario)
+
 
 # Run Assignments and Skims
-extra_atrr(early_am)
+emme_matrix_initial(early_am,emme_matrices)
+hdf5_to_emme(early_am,emme_matrices)
+extra_attr(early_am)
 extra_attr_import(early_am)
 arterial_delay_calc(early_am, link_calc_spec, node_calc_spec)
+#truck_generation(early_am,default_path,current_scenario)
 traffic_assignment(early_am, path_assign_spec)
 time_skims(early_am,attr_skim_spec,link_calc_spec)
 gc_skims(early_am,gc_skim_spec)
 distance_skims(early_am,attr_skim_spec,link_calc_spec)
 volume_skims(early_am,volume_skim_spec)
-export_skims(early_am)
+emme_to_hdf5(early_am,emme_matrices)
 
 my_desktop.close()
 end_of_run = time.time()

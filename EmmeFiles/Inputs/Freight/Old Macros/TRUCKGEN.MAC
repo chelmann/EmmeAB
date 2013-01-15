@@ -1,0 +1,33 @@
+ ~$>start
+ ********************************************************************************
+ * Macro File Name: TRUCKGEN.MAC                                                *
+ * Original Date: 10/09/2002                                                    *
+ * Revised Date:                                                                *
+ * Purpose: Calls all macros necessary for a complete truck trip generation     *
+ *          model run.                                                          *
+ * Input Files:                                                                 *
+ * Temporary Files:                                                             *
+ * Output Files:                                                                *
+ * Notes:                                                                       *
+ * Report File:                                                                 *
+ ********************************************************************************
+ ~:start
+ ~?!i&32768
+ ~o|295
+ /
+ / Convert passenger model employment to truck model employment
+ ~<truckmodel\trkempl.mac
+ /
+ / Compute truck Ps and As
+ ~<truckmodel\truck_pa.mac
+ /
+ / Move mo truck As to md truck As
+ ~<truckmodel\convert_od.mac
+ /
+ / Add special generator truck trips to heavy truck As
+ ~<truckmodel\splgen.mac
+ /
+ / Adjust truck Ps and As
+ ~<truckmodel\adj_pa.mac
+
+

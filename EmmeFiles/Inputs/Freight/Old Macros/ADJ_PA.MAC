@@ -1,0 +1,25 @@
+ ~$>start
+ ********************************************************************************
+ * Macro File Name: ADJUST_PA.MAC                                               *
+ * Original Date: 03/31/2006                                                    *
+ * Revised Date:                                                                *
+ * Purpose: Applies calibration factors to adjust light, medium, and heavy      *
+ *          truck productions and attractions.                                  *        
+ * Input Files:                                                                 *
+ * Temporary Files:                                                             *
+ * Output Files:                                                                *
+ * Notes:                                                                       *
+ * Report File: ADJUST_PA.RPT                                                   *
+ ********************************************************************************
+ ~:start
+ reports=ADJUST_PA.RPT
+ 3.21
+ ~+|1|y|mo"LTProF"|n|mo"LTPro"*0.280|||n|2
+ ~+|1|y|mo"MTProF"|n|mo"MTPro"*0.547|||n|2
+ ~+|1|y|mo"HTProF"|n|mo"HTPro"*1.125|||n|2
+ ~+|1|y|md"LTAttF"|n|md"LTAtt"*0.749|||n|2
+ ~+|1|y|md"MTAttF"|n|md"MTAtt"*0.500|||n|2
+ ~+|1|y|md"HTAttF"|n|md"HTAtt"*1.375|||n|2
+ q
+ reports=?
+ q
