@@ -18,6 +18,51 @@ This code is intended to control the exchange of data between the PSRC's network
 
 The vehicle skims include 756 matrices (12 time periods x 63 skims). Previous data exchanges between our model systems relied upon transfer via comma-separated formats.  We have implemented code that utilizes an HDF5 database as a storage container for all Emme model output.  The intent is to use hdf5 during runtime for all model processes as there are a variety of api's in various languages to access the data. For now we are assuming an HDF5 database for each time period but this might change as we move forward with implementation.
 
+##Emme Data Structure##
+To effectively utilize multiple cores on a pc for model runs, we need to have a separate Emme databank and corresponding Emme project for every time period that we wish to run in parallel.  So in order to run 12 highway assignments concurrently, we need to have 12 distinct project files with only one databank in each.
+
+The current folder structure is:
+
+Root Directory (for example, C:\ABM)
+ -> Banks
+    -> Bank1
+    -> Bank2
+    -> Bank3
+    -> Bank4
+    etc.
+ -> Projects
+    -> Project1
+    -> Project2
+    -> Project3
+    -> Project4
+    etc.
+
+During code testing, we are relying on hardcoding all paths to the project files in the code.  Once testing of the code is complete, we plan to implement a refined approach to selecting the projects either through the use of a control file or possibly a tkinter based dialog selection using tkFileDialog.
+
+##Input Files##
+As of now, there are a variety of input files that exist in various ascii formats.  These files currently reside in the "Inputs" folder under each bank.  The inputs inlcude:
+
+	1. user_classes.txt (dictionary)
+		This file contains relevant data about the vehicle classes used in the skimming process. It is used to create all relevant 				matrices, link attributes and assignment and skim parameters used in the course of the run.
+	2. vdfs.txt (input)
+		This file contains the specification of the volume delay functions need for assignments in Emme
+	3. tolls.txt (input)
+		This file contains the specification of the link level tolls for the network
+	4. link_calculation.txt (Emme Tool Specification)
+		This file contains the specification for the link calculator tool from Emme Modeller
+	5. node_calculation.txt (Emme Tool Specification)
+		This file contains the specification for the node calculator tool from Emme Modeller
+	6. general_attribute_based_skim.txt (Emme Tool Specification)
+		This file contains the specification for Path Based Skimming of a network attribute from Emme Modeller
+	7. general_generalized_cost_skim.txt (Emme Tool Specification)
+		This file contains the specification for Path Based Skimming of an od object from Emme Modeller
+	8. general_path_based_assignment.txt (Emme Tool Specification)
+		This file contains the specification for Path Based Assignments from Emme Modeller
+	9. general_path_based_volume.txt (Emme Tool Specification)
+		This file contains the specification for Path Based Class Specific volumes from Emme Modeller
+
+We are working on a solution to generalize the creation of as many of these inputs as possible.  The vdfs and tolls file could reside in our hdf5 datastore.  The Emme specifications might be auto-generated based on the inputs in the user_class dictionary.  For now, these specification files work for networks with 21 user classes.
+
 ##Time Periods##
 DaySim calculates travel for all hours of the day.  In order to provide meaningful accessibility data to DaySim and still maintain reasonable model run times, the PSRC network model will be various time periods per day for various modal purposes.  The difference by mode reflects the availability of network related data b ymode and time of day.  
 
